@@ -64,7 +64,7 @@ All commands follow: `<user>:<category>:<command-name>`
 ├── hooks/          # Event hooks (planned)
 ├── agents/         # Custom agents (planned)
 ├── skills/         # Reusable skills (planned)
-└── mcp/           # MCP servers (planned)
+└── mcp/            # MCP servers (planned)
 ```
 
 ## Creating New Commands
