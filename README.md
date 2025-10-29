@@ -56,7 +56,7 @@ See [.claude/README.md](.claude/README.md) for detailed documentation.
 
 ```bash
 # Clone this repository
-git clone https://github.com/yourusername/claude-hub.git
+git clone https://github.com/<your-username>/claude-hub.git
 
 # Copy to your project
 cp -r claude-hub/.claude /path/to/your/project/
