@@ -10,7 +10,7 @@ This repository contains custom Claude Code extensions including slash commands,
 ├── hooks/          # Event hooks (pre/post tool execution)
 ├── agents/         # Custom agent definitions
 ├── skills/         # Reusable skill modules
-└── mcp/           # Model Context Protocol servers
+└── mcp/            # Model Context Protocol servers
 ```
 
 ## Available Commands
