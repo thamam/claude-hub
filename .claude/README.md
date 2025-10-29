@@ -89,11 +89,10 @@ Symlink or copy to your home directory's `.claude/` folder:
 
 ```bash
 # Option 1: Symlink (changes reflect automatically)
-ln -s /home/thh3/personal/claude-hub/.claude/commands/thh3:bug:log.md ~/.claude/commands/
+ln -s $(pwd)/.claude/commands/thh3:bug:log.md ~/.claude/commands/
 
 # Option 2: Copy (static snapshot)
-cp /home/thh3/personal/claude-hub/.claude/commands/thh3:bug:log.md ~/.claude/commands/
-```
+cp $(pwd)/.claude/commands/thh3:bug:log.md ~/.claude/commands/
 
 ## Creating New Commands
 
