@@ -69,10 +69,10 @@ cp -r claude-hub/.claude /path/to/your/project/
 mkdir -p ~/.claude/commands
 
 # Symlink commands for automatic updates
-ln -s $(pwd)/.claude/commands/thh3:bug:log.md ~/.claude/commands/
+ln -s $(pwd)/.claude/commands/* ~/.claude/commands/
 
 # Or copy for static version
-cp .claude/commands/thh3:bug:log.md ~/.claude/commands/
+cp .claude/commands/* ~/.claude/commands/
 ```
 
 ## Usage Examples
