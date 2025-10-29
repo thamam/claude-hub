@@ -80,7 +80,7 @@ User: "All feature matches are marked as outliers except when comparing baseline
 Copy the `.claude/` directory to your project root:
 
 ```bash
-cp -r /home/thh3/personal/claude-hub/.claude /path/to/your/project/
+cp -r ./.claude /path/to/your/project/
 ```
 
 ### For Global Use
