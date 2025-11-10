@@ -1,0 +1,26 @@
+# Claude Code Conductor Configuration
+
+context:
+  max_size: 8000  # Maximum context size in characters
+  include_patterns: true  # Include code patterns in context
+  include_learnings: true  # Include learnings in context
+
+sync:
+  method: git  # Sync method: git, dropbox, or file
+  remote: origin  # Git remote name
+  branch: conductor-state  # Branch for state sync
+  auto_sync: false  # Automatically sync on changes
+
+defaults:
+  project: null  # Default project (set with CONDUCTOR_PROJECT env var)
+  verbose: false  # Verbose output
+  output: human  # Output format: human or json
+
+integrations:
+  memory_mcp: true  # Use memory MCP server
+  clipboard: true  # Auto-copy prompts to clipboard
+
+performance:
+  startup_timeout: 50  # Maximum startup time in ms (target)
+  command_timeout: 100  # Maximum command time in ms (target)
+  context_timeout: 200  # Maximum context preparation time in ms (target)
