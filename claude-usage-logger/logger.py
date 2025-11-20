@@ -5,10 +5,12 @@ Logs tool usage patterns to JSONL or SQLite for analysis.
 Automatically uses SQLite if database exists, otherwise uses JSONL.
 """
 
+import atexit
 import json
 import os
 import sqlite3
 import sys
+import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional
@@ -38,12 +40,45 @@ class UsageLogger:
         # Determine which backend to use
         self.use_sqlite = self.db_file.exists()
 
+        # Thread safety lock
+        self._lock = threading.Lock()
+        self.conn = None
+
         if self.use_sqlite:
-            self.conn = sqlite3.connect(str(self.db_file))
+            self.conn = sqlite3.connect(
+                str(self.db_file),
+                check_same_thread=False,  # Allow use across threads
+                timeout=10.0  # Wait up to 10 seconds if database is locked
+            )
+            # Register cleanup on exit
+            atexit.register(self.close)
         else:
             self._ensure_log_file_exists()
 
         self._session_id = self._get_or_create_session_id()
+
+    def __enter__(self):
+        """Context manager entry."""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit."""
+        self.close()
+        return False
+
+    def close(self):
+        """Close the database connection if open."""
+        if self.conn is not None:
+            try:
+                self.conn.close()
+            except Exception:
+                pass  # Ignore errors during cleanup
+            finally:
+                self.conn = None
+
+    def __del__(self):
+        """Cleanup on deletion."""
+        self.close()
 
     def _ensure_log_file_exists(self):
         """Ensure the log file exists, create if it doesn't."""
@@ -120,9 +155,10 @@ class UsageLogger:
         # Add any additional metadata
         log_entry.update(kwargs)
 
-        # Append to log file
-        with open(self.log_file, "a") as f:
-            f.write(json.dumps(log_entry) + "\n")
+        # Thread-safe file append
+        with self._lock:
+            with open(self.log_file, "a") as f:
+                f.write(json.dumps(log_entry) + "\n")
 
         return True
 
@@ -134,28 +170,36 @@ class UsageLogger:
         **kwargs
     ) -> bool:
         """Log to SQLite database."""
-        # Extract known fields
-        skill_name = kwargs.pop("skill_name", None)
-        subagent_name = kwargs.pop("subagent_name", None)
+        if self.conn is None:
+            raise RuntimeError("Database connection is closed")
 
-        # Store remaining fields as metadata
-        metadata = json.dumps(kwargs) if kwargs else None
+        # Extract known fields without mutating kwargs
+        skill_name = kwargs.get("skill_name")
+        subagent_name = kwargs.get("subagent_name")
 
-        # Insert into database
-        cursor = self.conn.cursor()
-        cursor.execute(
-            """
-            INSERT INTO usage_log (
-                timestamp, tool_name, session_id, session_name,
-                skill_name, subagent_name, metadata
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                timestamp, tool_name, self._session_id, session_name,
-                skill_name, subagent_name, metadata
+        # Store remaining fields as metadata (exclude known fields)
+        metadata_fields = {
+            k: v for k, v in kwargs.items()
+            if k not in ("skill_name", "subagent_name")
+        }
+        metadata = json.dumps(metadata_fields) if metadata_fields else None
+
+        # Thread-safe database insert
+        with self._lock:
+            cursor = self.conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO usage_log (
+                    timestamp, tool_name, session_id, session_name,
+                    skill_name, subagent_name, metadata
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    timestamp, tool_name, self._session_id, session_name,
+                    skill_name, subagent_name, metadata
+                )
             )
-        )
-        self.conn.commit()
+            self.conn.commit()
 
         return True
 

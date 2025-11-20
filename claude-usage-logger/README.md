@@ -25,6 +25,13 @@ This logger helps track how Claude Code tools are being used, providing insights
 - Export capabilities (CSV)
 - Database file: `~/.claude_usage.db`
 
+### Production-Ready Improvements
+- **Thread Safety**: Safe for concurrent access from multiple threads
+- **Resource Management**: Automatic connection cleanup with context managers
+- **No Side Effects**: kwargs dictionaries are not mutated
+- **Error Handling**: Graceful degradation on logging failures
+- **Connection Pooling**: Efficient database connection management
+
 ## Installation
 
 ### Quick Start
@@ -64,6 +71,7 @@ claude-usage-stats-poc
 
 #### Using the Logger in Your Code
 
+**Basic Usage:**
 ```python
 import sys
 sys.path.insert(0, '/root/claude-usage-logger')
@@ -84,6 +92,46 @@ log_tool_usage(
     session_name="Debug Session",
     command_length=120
 )
+```
+
+**Context Manager Usage (Recommended for explicit resource control):**
+```python
+from logger import UsageLogger
+
+# Automatic cleanup when done
+with UsageLogger() as logger:
+    logger.log_tool_usage("task_start")
+    # ... do work ...
+    logger.log_tool_usage("task_complete")
+# Connection automatically closed here
+
+# Or with explicit close
+logger = UsageLogger()
+try:
+    logger.log_skill("data-processing")
+finally:
+    logger.close()
+```
+
+**Thread-Safe Usage:**
+```python
+from logger import UsageLogger
+import threading
+
+# Single logger instance can be safely shared across threads
+logger = UsageLogger()
+
+def worker(thread_id):
+    for i in range(10):
+        logger.log_tool_usage("parallel_task", thread_id=thread_id, iteration=i)
+
+threads = [threading.Thread(target=worker, args=(i,)) for i in range(5)]
+for t in threads:
+    t.start()
+for t in threads:
+    t.join()
+
+logger.close()
 ```
 
 ### Phase 2: SQLite Migration
